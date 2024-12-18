@@ -2,7 +2,7 @@ import os
 import google.generativeai as genai
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import requests  # To send messages to Telegram Bot
+import requests  
 
 # Flask application setup
 app = Flask(__name__)
@@ -20,6 +20,7 @@ generation_config = {
     "top_p": 1,
     "top_k": 1,
     "max_output_tokens": 2048,
+    
 }
 
 # Define safety settings
@@ -63,6 +64,14 @@ def chat():
     if not user_input:
         return jsonify({"error": "No message provided!"}), 400
     
+    # Check for the keywords "kimlong" or "founder"
+    if "who is kimlong" in user_input.lower() or "who is the founder" in user_input.lower() or "who is the founder of this chatbot" in user_input.lower() or "Do you know kimlong" in user_input.lower() or "Do u know kimlong" in user_input.lower() or "kimlong" in user_input.lower():
+        return jsonify({"response": "Yes, the founder of this chatbot is Kimlong (Ieng Kimlong)."})
+    
+    # Check for questions about the founder's origin
+    if "where is kimlong from" in user_input.lower() or "where the founder from" in user_input.lower() or "where the founder come from" in user_input.lower():
+        return jsonify({"response": "Kimlong is from Cambodia."})
+   
     try:
         # Start a chat session with conversation history
         chat = model.start_chat(history=conversation_history)
@@ -87,6 +96,22 @@ def chat():
     except Exception as e:
         print(f"Google Gemini API Error: {e}")
         return jsonify({"error": "Sorry, there was an error processing your request."}), 500
+
+# Add a new endpoint for user feedback
+@app.route("/feedback", methods=["POST"])
+def feedback():
+    """Handles user feedback to improve responses."""
+    user_input = request.json.get("message")
+    correct_response = request.json.get("correct_response")
+    
+    if not user_input or not correct_response:
+        return jsonify({"error": "Incomplete feedback provided!"}), 400
+    
+    # Save feedback to a file or database (for simplicity, we'll use a text file)
+    with open("feedback_log.txt", "a") as f:
+        f.write(f"User Input: {user_input}\nCorrect Response: {correct_response}\n\n")
+    
+    return jsonify({"response": "Thank you for your feedback!"})
 
 if __name__ == "__main__":
     print("Flask server starting...")
