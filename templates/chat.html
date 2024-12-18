@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cambodian Inspired Chatbot</title>
     <style>
-        :root {
+       :root {
             --primary-color: #1E5631;
             --secondary-color: #FFC300;
             --background-color: #F5E6CA;
@@ -288,7 +288,69 @@
     </div>
 
     <script>
-        // JavaScript code remains unchanged
+        const messagesDiv = document.getElementById("messages");
+        const userInput = document.getElementById("userInput");
+        const sendButton = document.getElementById("sendButton");
+        const loadingDiv = document.getElementById("loading");
+        const errorMessageDiv = document.getElementById("errorMessage");
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            userInput.value = "";
+            errorMessageDiv.textContent = "";
+
+            loadingDiv.style.display = 'block';
+
+            fetch("./chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Server error');
+                return response.json();
+            })
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                if (data.error) {
+                    errorMessageDiv.textContent = data.error;
+                } else {
+                    addMessage(data.response, 'bot');
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                loadingDiv.style.display = 'none';
+                errorMessageDiv.textContent = "An error occurred. Please try again!";
+            });
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        userInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
